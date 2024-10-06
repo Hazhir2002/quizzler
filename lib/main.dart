@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
-void main() => runApp(Quizzler());
+import 'quiz_brain.dart';
+
+QuizBrain quizBrain = QuizBrain();
+
+void main() {
+  runApp(
+    const Quizzler(),
+  );
+}
 
 class Quizzler extends StatelessWidget {
+  const Quizzler({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
         backgroundColor: Colors.grey.shade900,
-        body: SafeArea(
+        body: const SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            padding: EdgeInsets.symmetric(horizontal: 10.0),
             child: QuizPage(),
           ),
         ),
@@ -20,26 +31,68 @@ class Quizzler extends StatelessWidget {
 }
 
 class QuizPage extends StatefulWidget {
+  const QuizPage({super.key});
+
   @override
-  _QuizPageState createState() => _QuizPageState();
+  State<QuizPage> createState() => _QuizPageState();
 }
 
 class _QuizPageState extends State<QuizPage> {
+  List<Widget> scoreKeeper = <Widget>[];
+
+  int questionNumber = 0;
+
+  void answerQuestion(bool answer) {
+    if (quizBrain.getQuestionAnswer() == answer) {
+      setState(() {
+        scoreKeeper.add(
+          const Expanded(
+            child: Icon(
+              Icons.check,
+              color: Colors.green,
+            ),
+          ),
+        );
+      });
+    } else {
+      setState(() {
+        scoreKeeper.add(
+          const Expanded(
+            child: Icon(
+              Icons.close,
+              color: Colors.red,
+            ),
+          ),
+        );
+      });
+    }
+    quizBrain.nextQuestion();
+    if (quizBrain.isFinished()) {
+      Alert(
+        context: context,
+        title: "Quizzler",
+        desc: "The questions are finished",
+      ).show();
+      quizBrain.reset();
+      scoreKeeper = [];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Expanded(
+        Expanded(
           flex: 5,
           child: Padding(
-            padding: EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                'This is where the question text will go.',
+                quizBrain.getQuestionText(),
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 25.0,
                   color: Colors.white,
                 ),
@@ -62,7 +115,7 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
               onPressed: () {
-                //The user picked true.
+                answerQuestion(true);
               },
             ),
           ),
@@ -82,19 +135,20 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
               onPressed: () {
-                //The user picked false.
+                answerQuestion(false);
               },
             ),
           ),
         ),
-        //TODO: Add a Row here as your score keeper
+        Expanded(
+          child: Row(
+            children: scoreKeeper,
+          ),
+        ),
       ],
     );
   }
 }
 
 /*
-question1: 'You can lead a cow down stairs but not up stairs.', false,
-question2: 'Approximately one quarter of human bones are in the feet.', true,
-question3: 'A slug\'s blood is green.', true,
 */
